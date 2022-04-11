@@ -1,0 +1,3 @@
+The data can be found in data/lung_cancer_xenografts
+
+Create the data with the notebook: data_creation_data_visualization.ipynb

@@ -401,7 +401,7 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
     for train, test in tqdm(cv_out_splits,total = n_splits):
         # select only subset of train data
         # TODO: select according to sheme
-        if num_use_train is not None:
+        if num_use_train is not None and num_use_train > 0:
             rand_idx = np.random.permutation(np.arange(len(train)))
             train = np.array(train)[rand_idx[0:num_use_train]]            
             
@@ -472,6 +472,11 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                 # transform input
                 drug_data_pre[drug_data_pre >= vocab_size] = 0     
         
+        use_modes = ['scratch','pretrain']
+        if num_use_train is not None and num_use_train == 0:
+            use_modes = ['pretrain']
+        
+        
         # for all model_types
         for model_type in model_types:
             if type(epochs_pretrain) == dict:
@@ -480,7 +485,7 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                 use_epochs_pretrain = epochs_pretrain
         
             if model_type == 'nn_baseline':
-                for mode in ['scratch','pretrain']:
+                for mode in use_modes:
                     tf.keras.backend.clear_session()
                     model = models.get_baseline_nn_model(num_gene_features = num_gene_features,
                         vocab_size = vocab_size,
@@ -497,14 +502,16 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                         model.fit([gene_data_pre,drug_data_pre],label_pre,epochs = use_epochs_pretrain,
                                         batch_size = batch_size,verbose = verbose)
                        
-                            
-                    early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
-                    model.fit([train_gene_data,train_drug_data],train_label,epochs = epochs,
-                                         validation_data=([tune_gene_data,tune_drug_data],tune_label),
-                                         batch_size = batch_size,
-                                         callbacks = [early_stopping],
-                                         shuffle=True, verbose = verbose)
-                    predictions = model.predict([val_gene_data,val_drug_data])
+                    if num_use_train is not None and num_use_train == 0:
+                        predictions = model.predict([val_gene_data,val_drug_data])
+                    else:
+                        early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
+                        model.fit([train_gene_data,train_drug_data],train_label,epochs = epochs,
+                                             validation_data=([tune_gene_data,tune_drug_data],tune_label),
+                                             batch_size = batch_size,
+                                             callbacks = [early_stopping],
+                                             shuffle=True, verbose = verbose)
+                        predictions = model.predict([val_gene_data,val_drug_data])
                     cur_model_name = model_type + '_' + mode
                     if cur_model_name not in result_dict:
                         result_dict[cur_model_name] = dict()
@@ -520,7 +527,7 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                     result_dict[cur_model_name]['lab_data_complete'].append(val_lab)
                     
             elif model_type == 'nn_paccmann':
-                for mode in ['scratch','pretrain']:
+                for mode in use_modes:
                     tf.keras.backend.clear_session()
                     model = paccmann_model.get_paccmann_model(model_params)
                     
@@ -528,15 +535,17 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                         model.fit([drug_data_pre,np.zeros([gene_data_pre.shape[0],1]),gene_data_pre],label_pre,epochs = use_epochs_pretrain,
                                         batch_size = batch_size,verbose = verbose)
                         
-                    
-                    early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
-                    model.fit([train_drug_data,np.zeros([train_drug_data.shape[0],1]),train_gene_data],train_label,epochs = epochs,
-                                         validation_data=([tune_drug_data,np.zeros([tune_drug_data.shape[0],1]),tune_gene_data],tune_label),
-                                         batch_size = batch_size,
-                                         callbacks = [early_stopping],
-                                         shuffle=True, verbose = verbose)
+                    if num_use_train is not None and num_use_train == 0:
+                        predictions = model.predict([val_drug_data,np.zeros([val_drug_data.shape[0],1]),val_gene_data])
+                    else:
+                        early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
+                        model.fit([train_drug_data,np.zeros([train_drug_data.shape[0],1]),train_gene_data],train_label,epochs = epochs,
+                                             validation_data=([tune_drug_data,np.zeros([tune_drug_data.shape[0],1]),tune_gene_data],tune_label),
+                                             batch_size = batch_size,
+                                             callbacks = [early_stopping],
+                                             shuffle=True, verbose = verbose)
 
-                    predictions = model.predict([val_drug_data,np.zeros([val_drug_data.shape[0],1]),val_gene_data])
+                        predictions = model.predict([val_drug_data,np.zeros([val_drug_data.shape[0],1]),val_gene_data])
                     
                     cur_model_name = model_type + '_' + mode
                     if cur_model_name not in result_dict:
@@ -552,7 +561,7 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                     result_dict[cur_model_name]['inhib_data_complete'].append(val_inhib)
                     result_dict[cur_model_name]['lab_data_complete'].append(val_lab)
             elif model_type == 'tDNN':
-                for mode in ['scratch','pretrain']:
+                for mode in use_modes:
                     tf.keras.backend.clear_session()
                     model = models.get_tdnn_model(num_gene_features = model_params['genes_number'],
                                             num_drug_features = model_params['drug_descriptors'])
@@ -561,15 +570,17 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                         model.fit([drug_data_des_pre,gene_data_pre],label_pre,epochs = use_epochs_pretrain,
                                         batch_size = batch_size,verbose = verbose)
                         
-                    
-                    early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
-                    model.fit([train_drug_des_data,train_gene_data],train_label,epochs = epochs,
-                                         validation_data=([tune_drug_des_data,tune_gene_data],tune_label),
-                                         batch_size = batch_size,
-                                         callbacks = [early_stopping],
-                                         shuffle=True, verbose = verbose)
+                    if num_use_train is not None and num_use_train == 0:
+                        predictions = model.predict([val_drug_des_data,val_gene_data])
+                    else:
+                        early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
+                        model.fit([train_drug_des_data,train_gene_data],train_label,epochs = epochs,
+                                             validation_data=([tune_drug_des_data,tune_gene_data],tune_label),
+                                             batch_size = batch_size,
+                                             callbacks = [early_stopping],
+                                             shuffle=True, verbose = verbose)
 
-                    predictions = model.predict([val_drug_des_data,val_gene_data])
+                        predictions = model.predict([val_drug_des_data,val_gene_data])
                     
                     cur_model_name = model_type + '_' + mode
                     if cur_model_name not in result_dict:
@@ -585,6 +596,8 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                     result_dict[cur_model_name]['inhib_data_complete'].append(val_inhib)
                     result_dict[cur_model_name]['lab_data_complete'].append(val_lab)
             elif model_type == 'rf':
+                if num_use_train is not None and num_use_train == 0:
+                    continue
                 model = RandomForestRegressor(n_estimators = num_trees,
                                               n_jobs = -1)
                 model.fit(np.hstack([train_gene_data, train_drug_data]),train_label)

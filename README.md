@@ -45,4 +45,4 @@ Run create_descriptors_for_smiles.ipynb to create the descriptions for the drugs
 Run *.sh scripts
 
 ### Plot results
-Run plot_print_results_precision_oncology.ipynb and plot_print_results_drug_development.ipynb to plot the results presented in the paper.
+Run plot_print_results_precision_oncology_drug_development_only_pretrain to plot/reproduce the results presented in the paper.

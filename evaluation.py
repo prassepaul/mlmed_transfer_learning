@@ -357,7 +357,9 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                  verbose = 1, num_use_train = None,
                  use_combat = False, transform_gene_data = False,
                  model_types = ['nn_baseline','nn_paccmann','rf'],
-                 only_return_splits = False):
+                 only_return_splits = False,
+                 pre_train_learning_rate = 0.001,
+                 fine_tuning_learning_rate = 0.0001):
                  
     result_dict = dict()
     if 'rf' in model_types:
@@ -498,7 +500,11 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                         use_batch_decorrelation = use_batch_decorrelation,
                         use_normal_batch_norm = use_normal_batch_norm)
                     
-                    if mode == 'pretrain':                        
+                    if mode == 'pretrain':  
+                        opt = tf.keras.optimizers.Adam(learning_rate=pre_train_learning_rate)
+                        loss = tf.keras.losses.MeanSquaredError()
+                        model.compile(optimizer = opt, loss = loss, 
+                                    metrics=["mse"])
                         model.fit([gene_data_pre,drug_data_pre],label_pre,epochs = use_epochs_pretrain,
                                         batch_size = batch_size,verbose = verbose)
                        
@@ -506,6 +512,10 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                         predictions = model.predict([val_gene_data,val_drug_data])
                     else:
                         early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
+                        opt = tf.keras.optimizers.Adam(learning_rate=fine_tuning_learning_rate)
+                        loss = tf.keras.losses.MeanSquaredError()
+                        model.compile(optimizer = opt, loss = loss, 
+                                    metrics=["mse"])
                         model.fit([train_gene_data,train_drug_data],train_label,epochs = epochs,
                                              validation_data=([tune_gene_data,tune_drug_data],tune_label),
                                              batch_size = batch_size,
@@ -531,7 +541,11 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                     tf.keras.backend.clear_session()
                     model = paccmann_model.get_paccmann_model(model_params)
                     
-                    if mode == 'pretrain':                               
+                    if mode == 'pretrain':
+                        opt = tf.keras.optimizers.Adam(learning_rate=pre_train_learning_rate)
+                        loss = tf.keras.losses.MeanSquaredError()
+                        model.compile(optimizer = opt, loss = loss, 
+                                    metrics=["mse"])
                         model.fit([drug_data_pre,np.zeros([gene_data_pre.shape[0],1]),gene_data_pre],label_pre,epochs = use_epochs_pretrain,
                                         batch_size = batch_size,verbose = verbose)
                         
@@ -539,6 +553,10 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                         predictions = model.predict([val_drug_data,np.zeros([val_drug_data.shape[0],1]),val_gene_data])
                     else:
                         early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
+                        opt = tf.keras.optimizers.Adam(learning_rate=fine_tuning_learning_rate)
+                        loss = tf.keras.losses.MeanSquaredError()
+                        model.compile(optimizer = opt, loss = loss, 
+                                    metrics=["mse"])
                         model.fit([train_drug_data,np.zeros([train_drug_data.shape[0],1]),train_gene_data],train_label,epochs = epochs,
                                              validation_data=([tune_drug_data,np.zeros([tune_drug_data.shape[0],1]),tune_gene_data],tune_label),
                                              batch_size = batch_size,
@@ -566,7 +584,11 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                     model = models.get_tdnn_model(num_gene_features = model_params['genes_number'],
                                             num_drug_features = model_params['drug_descriptors'])
                     
-                    if mode == 'pretrain':                               
+                    if mode == 'pretrain':
+                        opt = tf.keras.optimizers.Adam(learning_rate=pre_train_learning_rate)
+                        loss = tf.keras.losses.MeanSquaredError()
+                        model.compile(optimizer = opt, loss = loss, 
+                                    metrics=["mse"])
                         model.fit([drug_data_des_pre,gene_data_pre],label_pre,epochs = use_epochs_pretrain,
                                         batch_size = batch_size,verbose = verbose)
                         
@@ -574,6 +596,10 @@ def get_cv_result_multiple_models(n_splits,train_data,pre_train_data=None,
                         predictions = model.predict([val_drug_des_data,val_gene_data])
                     else:
                         early_stopping = EarlyStopping(monitor='loss', patience=early_stopping_patience)
+                        opt = tf.keras.optimizers.Adam(learning_rate=fine_tuning_learning_rate)
+                        loss = tf.keras.losses.MeanSquaredError()
+                        model.compile(optimizer = opt, loss = loss, 
+                                    metrics=["mse"])
                         model.fit([train_drug_des_data,train_gene_data],train_label,epochs = epochs,
                                              validation_data=([tune_drug_des_data,tune_gene_data],tune_label),
                                              batch_size = batch_size,

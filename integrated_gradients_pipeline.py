@@ -57,7 +57,7 @@ def main():
     parser.add_argument('-source', '--source', type=str, default='gdsc')    
     parser.add_argument('-target', '--target', type=str, default='beat_aml')    
     parser.add_argument('-use_netpop', '--use_netpop', type=str, default='ensemble')
-    parser.add_argument('-model_types', '--model_types', type=str, default="['tDNN','nn_baseline','nn_paccmann','rf']")    
+    parser.add_argument('-model_types', '--model_types', type=str, default="['tDNN','nn_baseline','nn_paccmann']") #"['tDNN','nn_baseline','nn_paccmann','rf']"   
     parser.add_argument('-seed','--seed', type=int, default = 42)
     parser.add_argument('-flag_normalize_descriptors','--flag_normalize_descriptors',type=str,default='True')
     parser.add_argument('-use_samples','--use_samples',type=int,default=10000)
@@ -168,10 +168,10 @@ def main():
     # rf params
     model_params.update({'num_trees':100})
 
-    epochs_pretrain = {'nn_baseline':10,
+    epochs_pretrain = {'nn_baseline':100,
                        'nn_paccmann':100,
                        'rf':None,
-                       'tDNN':10}
+                       'tDNN':100}
 
     # tDNN
     model_params.update({'drug_descriptors':train_data['drug_data_des'].shape[1]})

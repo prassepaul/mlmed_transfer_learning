@@ -504,7 +504,9 @@ def get_train_pretrain_data(param_json_path = 'data/params.json',
             'min_max_scaler_descr' :  min_max_scaler_descr,
             'gene_list_dict':gene_list_dict,
             'gene_list':gene_list,
-            'smiles_character_dict':smiles_character_dict}
+            'smiles_character_dict':smiles_character_dict,
+            'gene_list_used':list(np.array(gene_list)[gene_use_ids]),
+            }
 
 def main():
     parser = argparse.ArgumentParser()
@@ -513,7 +515,7 @@ def main():
     parser.add_argument('-source', '--source', type=str, default='gdsc')    
     parser.add_argument('-target', '--target', type=str, default='beat_aml')    
     parser.add_argument('-use_netpop', '--use_netpop', type=str, default='ensemble')
-    parser.add_argument('-model_types', '--model_types', type=str, default="['tDNN','nn_baseline','nn_paccmann','rf']")    
+    parser.add_argument('-model_types', '--model_types', type=str, default="['tDNN','nn_baseline','nn_paccmann']")    # "['tDNN','nn_baseline','nn_paccmann','rf']"
     parser.add_argument('-seed','--seed', type=int, default = 42)
     parser.add_argument('-n_splits','--n_splits', type=int, default = 10)    
     parser.add_argument('-flag_normalize_descriptors','--flag_normalize_descriptors',type=str,default='True')
@@ -585,6 +587,7 @@ def main():
     min_max_scaler_descr = cur_train_pretrain_data_dict['min_max_scaler_descr']
     gene_list_dict = cur_train_pretrain_data_dict['gene_list_dict']
     gene_list = cur_train_pretrain_data_dict['gene_list']
+    gene_list_used = cur_train_pretrain_data_dict['gene_list_used']
     
     # get model_params
     result_path = param_dict['model_param_pretrain_csv']
@@ -620,21 +623,22 @@ def main():
     # rf params
     model_params.update({'num_trees':100})
 
-    epochs_pretrain = {'nn_baseline':10,
+    epochs_pretrain = {'nn_baseline':100,
                        'nn_paccmann':100,
                        'rf':None,
-                       'tDNN':10}
+                       'tDNN':100}
 
     # tDNN
     model_params.update({'drug_descriptors':train_data['drug_data_des'].shape[1]})
         
-    
+    early_stopping_patience = 25
     tmp_result_dict =  evaluation.get_cv_result_multiple_models(n_splits = n_splits,
                  train_data = train_data,pre_train_data=pre_train_data,
-                 model_params = model_params,epochs_pretrain = epochs_pretrain, epochs = 100,
+                 model_params = model_params,epochs_pretrain = epochs_pretrain, epochs = 1000,
                  cv_key = cv_key, batch_size = batch_size, num_use_train = use_samples,
                  use_combat = True, transform_gene_data = True,
-                 model_types = model_types)
+                 model_types = model_types,
+                 early_stopping_patience = 25)
     tmp_result_dict['min_max_scaler']       = min_max_scaler
     tmp_result_dict['min_max_scaler_descr'] = min_max_scaler_descr
     

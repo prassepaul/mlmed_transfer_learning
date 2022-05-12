@@ -1,4 +1,4 @@
-# Code for "Pretraining on In-Vitro and Fine-Tuning on Patient-Derived Data Improves Neural Drug-Sensitivity Models for Precision Oncology"
+# Code for "Pre-training on In-Vitro and Fine-Tuning on Patient-Derived Data Improves Neural Drug Sensitivity Models"
 This repository contains the code for the paper "Pretraining on In-Vitro and Fine-Tuning on Patient-Derived Data Improves Neural Drug Sensitivity Models for Precision Oncology"
 
 
